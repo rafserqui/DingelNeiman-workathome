@@ -1,3 +1,5 @@
+STATA='/mnt/c/Program Files (x86)/Stata14/StataMP-64.exe'
+
 #Definitions
 FOLDERS = ../input ../output
 #Recipes
@@ -11,4 +13,4 @@ $(FOLDERS):
 ../input/national_M2018_dl.xlsx: | ../input
 	if [ -e ../../downloaddata/output/$(@F) ] ; then ln -s ../../downloaddata/output/$(@F) $@ ; else exit 1; fi
 ../output/occupation_WFH_wage_plot.eps ../output/occupation_WFH_wage_plot_largetext.eps: plot.do ../input/national_M2018_dl.xlsx ../input/onet_teleworkable_blscodes.dta | ../output
-	stata-se -e $<
+	${STATA} -e $<

@@ -1,3 +1,5 @@
+STATA='/mnt/c/Program Files (x86)/Stata14/StataMP-64.exe'
+
 ## Definitions
 FOLDERS = ../input ../output
 INPUTS_DATA = ../input/country_isco08_telework.dta ../input/WEO_Data.xls
@@ -17,4 +19,4 @@ $(FOLDERS):
 
 #Outputs recipes
 $(OUTPUTS): correlates.do $(INPUTS_DATA) | ../output
-	stata-se -e $<
+	${STATA} -e $<

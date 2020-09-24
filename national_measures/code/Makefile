@@ -1,3 +1,5 @@
+STATA='/mnt/c/Program Files (x86)/Stata14/StataMP-64.exe'
+
 ## Definitions
 FOLDERS = ../input ../output
 INPUTS_DATA = ../input/national_M2018_dl.xlsx ../input/onet_teleworkable_blscodes.dta ../input/Teleworkable_BNJDopinion.dta \
@@ -18,8 +20,8 @@ $(FOLDERS):
 	if [ -e ../../occ_manual_scores/output/$(@F) ] ; then ln -s ../../occ_manual_scores/output/$(@F) $@ ; else exit 1; fi
 #Outputs recipes
 ../output/headline_onet.tex ../output/headline_manual.tex: headline_numbers.do ../input/national_M2018_dl.xlsx ../input/onet_teleworkable_blscodes.dta ../input/Teleworkable_BNJDopinion.dta | ../output
-	stata-se -e $<
+	${STATA} -e $<
 ../output/NAICS_telework_top5bottom5_table.tex ../output/NAICS2_table.tex ../output/NAICS_workfromhome.csv: naics.do ../input/natsector_M2018_dl.xlsx ../input/onet_teleworkable_blscodes.dta ../input/Teleworkable_BNJDopinion.dta | ../output
-	stata-se -e $<
+	${STATA} -e $<
 ../output/NAICS3_workfromhome.csv: naics_3digit.do ../input/nat3d_M2018_dl.xlsx ../input/onet_teleworkable_blscodes.dta ../input/Teleworkable_BNJDopinion.dta | ../output
-	stata-se -e $<
+	${STATA} -e $<

@@ -1,3 +1,5 @@
+STATA='/mnt/c/Program Files (x86)/Stata14/StataMP-64.exe'
+
 ## Definitions
 FOLDERS = ../input ../output slurmlogs
 INPUTS_DATA = 	../input/ONET_Work_Context.txt ../input/ONET_Work_Context_Categories.txt ../input/ONET_Occupation_Data.txt ../input/ONET_Work_Activities.txt
@@ -13,4 +15,4 @@ $(FOLDERS):
 	if [ -e ../../downloaddata/output/$(@F) ] ; then ln -s ../../downloaddata/output/$(@F) $@ ; else exit 1; fi
 #Outputs recipes
 ../output/onet_teleworkable.dta ../output/occupations_workathome.csv: onet_characteristics.do $(INPUTS_DATA) | ../output
-	stata-se -e $<
+	${STATA} -e $<

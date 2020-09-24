@@ -1,3 +1,5 @@
+STATA='/mnt/c/Program Files (x86)/Stata14/StataMP-64.exe'
+
 ## Definitions
 FOLDERS = ../input ../output
 INPUTS_DATA = ../input/ilostat-2020-04-10.csv ../input/ISCO_SOC_Crosswalk.xls ../input/national_M2018_dl.xlsx ../input/oes_2019_hybrid_structure.xlsx ../input/onet_teleworkable_blscodes.dta ../input/WEO_Data.xls
@@ -20,4 +22,4 @@ $(FOLDERS):
 
 #Outputs recipes
 ../output/country_isco08_telework.dta: country_level_measures.do $(INPUTS_DATA) | ../output
-	stata-se -e $<
+	${STATA} -e $<

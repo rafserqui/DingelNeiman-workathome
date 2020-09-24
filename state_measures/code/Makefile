@@ -1,3 +1,5 @@
+STATA='/mnt/c/Program Files (x86)/Stata14/StataMP-64.exe'
+
 #Recipes
 all: ../output/state_workfromhome.csv ../output/state_2018_teleworkable_onet.dta ../output/state_2018_teleworkable_manual.dta
 #Folders recipes
@@ -12,4 +14,4 @@ all: ../output/state_workfromhome.csv ../output/state_2018_teleworkable_onet.dta
 	if [ -e ../../occ_manual_scores/output/$(@F) ] ; then ln -s ../../occ_manual_scores/output/$(@F) $@ ; else exit 1; fi
 #Outputs recipes
 ../output/state_workfromhome.csv ../output/state_2018_teleworkable_onet.dta ../output/state_2018_teleworkable_manual.dta: produce_measures.do ../input/state_M2018_dl.xlsx ../input/national_M2018_dl.xlsx ../input/onet_teleworkable_blscodes.dta ../input/Teleworkable_BNJDopinion.dta | ../output
-	stata-se -e $<
+	${STATA} -e $<
