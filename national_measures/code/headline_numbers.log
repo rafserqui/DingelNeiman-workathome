@@ -1,0 +1,270 @@
+
+  ___  ____  ____  ____  ____ (R)
+ /__    /   ____/   /   ____/
+___/   /   /___/   /   /___/   14.2   Copyright 1985-2015 StataCorp LLC
+  Statistics/Data Analysis            StataCorp
+                                      4905 Lakeway Drive
+     MP - Parallel Edition            College Station, Texas 77845 USA
+                                      800-STATA-PC        http://www.stata.com
+                                      979-696-4600        stata@stata.com
+                                      979-696-4601 (fax)
+
+Single-user 8-core Stata perpetual license:
+       Serial number:  10699393
+         Licensed to:  Rafael
+                       
+
+Notes:
+      1.  Stata is running in batch mode.
+      2.  Unicode is supported; see help unicode_advice.
+      3.  More than 2 billion observations are allowed; see help obs_advice.
+      4.  Maximum number of variables is set to 5000; see help set_maxvar.
+
+. do "headline_numbers.do" 
+
+. //BN-JD coding of teleworkability
+. //Load national SOC data
+. import excel using "../input/national_M2018_dl.xlsx", clear firstrow
+
+. keep if OCC_GROUP=="broad"
+(924 observations deleted)
+
+. 
+. //Merge with BN-JD coding of teleworkability
+. clonevar BroadGroupCode = OCC_CODE
+
+. merge 1:1 BroadGroupCode using "../input/Teleworkable_BNJDopinion.dta", asser
+> t(using match) keep(match) nogen
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             0
+    matched                               455  
+    -----------------------------------------
+
+. rename Teleworkable teleworkable
+
+. tempfile tf_merged_manual
+
+. save `tf_merged_manual'
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000001.tmp saved
+
+. //Generate employment-weighted and wage-weighted means
+. egen emp_denom  = total(TOT_EMP)
+
+. egen emp_numer  = total(teleworkable*TOT_EMP)
+
+. replace H_MEAN = "100" if H_MEAN=="#"
+(0 real changes made)
+
+. destring H_MEAN, replace ig(*)
+H_MEAN: character * removed; replaced as double
+(19 missing values generated)
+
+. egen wage_denom = total(H_MEAN*TOT_EMP*(missing(H_MEAN)==0))
+
+. egen wage_numer = total(teleworkable*H_MEAN*TOT_EMP*(missing(H_MEAN)==0))
+
+. gen teleworkable_emp = emp_numer / emp_denom
+
+. gen teleworkable_wage = wage_numer / wage_denom
+
+. //Report
+. keep teleworkable_emp teleworkable_wage
+
+. duplicates drop
+
+Duplicates in terms of all variables
+
+(454 observations deleted)
+
+. list
+
+     +---------------------+
+     | telewo~p   telewo~e |
+     |---------------------|
+  1. | .3160958   .4161955 |
+     +---------------------+
+
+. quietly summarize teleworkable_emp
+
+. local tele_emp = string(100*`r(mean)',"%3.0f")
+
+. quietly summarize teleworkable_wage
+
+. local tele_wage = string(100*`r(mean)',"%3.0f")
+
+. shell echo -n "Approximately `tele_emp' percent of all US jobs, accounting fo
+> r `tele_wage' percent of overall wages, can be performed entirely at home.%" 
+> > ../output/headline_manual.tex
+request ignored because of batch mode
+
+. shell echo -n "`tele_emp' percent of all US jobs can be performed entirely at
+>  home.%" > ../output/headline_manual_shortfragment.tex
+request ignored because of batch mode
+
+. 
+. //Report teachers caveat
+. use `tf_merged_manual', clear
+
+. gen byte teacher = (substr(OCC_CODE,1,2)=="25")
+
+. keep if teacher==1
+(429 observations deleted)
+
+. gen emp_numer = teleworkable*TOT_EMP
+
+. collapse (sum) emp_numer emp_denom = TOT_EMP
+
+. gen teleworkable_emp = emp_numer / emp_denom
+
+. quietly summarize teleworkable_emp
+
+. local tele_emp = string(100*`r(mean)',"%3.0f")
+
+. quietly summarize emp_denom
+
+. local total_teachers = string(`r(mean)',"%10.0fc")
+
+. shell echo -n "Our scheme classifies `tele_emp' percent of `total_teachers' t
+> eachers as able to work from home." > ../output/teachers_caveat_manual.tex
+request ignored because of batch mode
+
+. 
+. 
+. //O*NET survey-derived coding of teleworkability
+. 
+. 
+. //Load national SOC data
+. import excel using "../input/national_M2018_dl.xlsx", clear firstrow
+
+. keep if OCC_GROUP=="detailed"
+(571 observations deleted)
+
+. //Merge with ONET-based coding of teleworkability; fill in "miscellaneous" ca
+> tegories using 4-digit means
+. merge 1:1 OCC_CODE using "../input/onet_teleworkable_blscodes.dta"
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                            48
+        from master                        46  (_merge==1)
+        from using                          2  (_merge==2)
+
+    matched                               762  (_merge==3)
+    -----------------------------------------
+
+. gen str OCC_CODE_4digit = substr(OCC_CODE,1,5)
+
+. bys OCC_CODE_4digit: egen numer = total(telew*TOT_EMP)
+
+. bys OCC_CODE_4digit: egen denom = total(TOT_EMP)
+
+. gen telew_4digit = numer / denom
+(2 missing values generated)
+
+. replace teleworkable = telew_4digit if missing(teleworkable)==1 & (substr(OCC
+> _CODE,-1,1)=="9"|substr(OCC_CODE,-2,2)=="90"|OCC_CODE=="11-1031") & (strpos(O
+> CC_TITLE,"All Other")!=0|strpos(OCC_TITLE,"Miscellaneous")!=0|OCC_TITLE=="Leg
+> islators") //
+(46 real changes made)
+
+. assert missing(teleworkable)==0
+
+. drop _merge OCC_CODE_4digit  numer denom telew_4digit
+
+. tempfile tf_merged_onet
+
+. save `tf_merged_onet'
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000002.tmp saved
+
+. 
+. //Generate employment-weighted and wage-weighted means
+. egen emp_denom  = total(TOT_EMP)
+
+. egen emp_numer  = total(teleworkable*TOT_EMP)
+
+. replace H_MEAN = "100" if H_MEAN=="#"
+(0 real changes made)
+
+. destring H_MEAN, replace ig(*)
+H_MEAN: character * removed; replaced as double
+(61 missing values generated)
+
+. egen wage_denom = total(H_MEAN*TOT_EMP*(missing(H_MEAN)==0))
+
+. egen wage_numer = total(teleworkable*H_MEAN*TOT_EMP*(missing(H_MEAN)==0))
+
+. gen teleworkable_emp = emp_numer / emp_denom
+
+. gen teleworkable_wage = wage_numer / wage_denom
+
+. //Report
+. keep teleworkable_emp teleworkable_wage
+
+. duplicates drop
+
+Duplicates in terms of all variables
+
+(809 observations deleted)
+
+. list
+
+     +---------------------+
+     | telewo~p   telewo~e |
+     |---------------------|
+  1. | .3663898   .4616595 |
+     +---------------------+
+
+. quietly summarize teleworkable_emp
+
+. local tele_emp = string(100*`r(mean)',"%3.0f")
+
+. quietly summarize teleworkable_wage
+
+. local tele_wage = string(100*`r(mean)',"%3.0f")
+
+. shell echo -n "Our classification implies that `tele_emp' percent of US jobs 
+> can plausibly be performed at home.%" > ../output/headline_topicsentence_onet
+> .tex
+request ignored because of batch mode
+
+. shell echo -n "the `tele_emp' percent of US jobs that can plausibly be perfor
+> med at home account for `tele_wage' percent of all wages.%"  > ../output/head
+> line_onet.tex
+request ignored because of batch mode
+
+. 
+. //Report teachers caveat
+. use `tf_merged_onet', clear
+
+. gen byte teacher = (substr(OCC_CODE,1,2)=="25")
+
+. keep if teacher==1
+(746 observations deleted)
+
+. gen emp_numer = teleworkable*TOT_EMP
+
+. collapse (sum) emp_numer emp_denom = TOT_EMP
+
+. gen teleworkable_emp = emp_numer / emp_denom
+
+. quietly summarize teleworkable_emp
+
+. local tele_emp = string(100*`r(mean)',"%3.0f")
+
+. quietly summarize emp_denom
+
+. local total_teachers = string(`r(mean)'/1000000,"%3.1fc")
+
+. shell echo -n "Our scheme classifies `tele_emp' percent of `total_teachers' t
+> eachers as able to work from home." > ../output/teachers_caveat_onet.tex
+request ignored because of batch mode
+
+. shell echo -n "our classification codes `tele_emp' percent of the `total_teac
+> hers' million teachers in the United States as able to work from home,%" > ..
+> /output/teachers_caveat_fragment_onet.tex
+request ignored because of batch mode
+
+. 
+end of do-file

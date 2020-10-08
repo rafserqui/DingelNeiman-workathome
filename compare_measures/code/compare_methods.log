@@ -1,0 +1,298 @@
+
+  ___  ____  ____  ____  ____ (R)
+ /__    /   ____/   /   ____/
+___/   /   /___/   /   /___/   14.2   Copyright 1985-2015 StataCorp LLC
+  Statistics/Data Analysis            StataCorp
+                                      4905 Lakeway Drive
+     MP - Parallel Edition            College Station, Texas 77845 USA
+                                      800-STATA-PC        http://www.stata.com
+                                      979-696-4600        stata@stata.com
+                                      979-696-4601 (fax)
+
+Single-user 8-core Stata perpetual license:
+       Serial number:  10699393
+         Licensed to:  Rafael
+                       
+
+Notes:
+      1.  Stata is running in batch mode.
+      2.  Unicode is supported; see help unicode_advice.
+      3.  More than 2 billion observations are allowed; see help obs_advice.
+      4.  Maximum number of variables is set to 5000; see help set_maxvar.
+
+. do "compare_methods.do" 
+
+. 
+. //Load national SOC data
+. tempfile tf_national_soc6 tf_national_soc5 tf_national_soc2
+
+. import excel using "../input/national_M2018_dl.xlsx", clear firstrow
+
+. keep if OCC_GROUP=="detailed"
+(571 observations deleted)
+
+. save `tf_national_soc6', replace
+(note: file C:\Users\Rafael\AppData\Local\Temp\ST_00000001.tmp not found)
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000001.tmp saved
+
+. import excel using "../input/national_M2018_dl.xlsx", clear firstrow
+
+. keep if OCC_GROUP=="broad"
+(924 observations deleted)
+
+. save `tf_national_soc5', replace
+(note: file C:\Users\Rafael\AppData\Local\Temp\ST_00000002.tmp not found)
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000002.tmp saved
+
+. import excel using "../input/national_M2018_dl.xlsx", clear firstrow
+
+. keep if substr(OCC_CODE,-4,4)=="0000" & substr(OCC_CODE,1,2)!="00" //equivale
+> nt to keep if OCC_GROUP=="major"
+(1,357 observations deleted)
+
+. gen soc2 = real(substr(OCC_CODE,1,2))
+
+. keep soc2 OCC_CODE OCC_TITLE 
+
+. compress
+  variable soc2 was float now byte
+  variable OCC_TITLE was str112 now str58
+  (1,254 bytes saved)
+
+. save `tf_national_soc2'
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000003.tmp saved
+
+. 
+. //ONET-based coding of teleworkability; fill in "miscellaneous" categories us
+> ing 4-digit employedment-weighted means
+. import excel using "../input/national_M2018_dl.xlsx", clear firstrow
+
+. keep if OCC_GROUP=="detailed"
+(571 observations deleted)
+
+. merge 1:1 OCC_CODE using "../input/onet_teleworkable_blscodes.dta"
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                            48
+        from master                        46  (_merge==1)
+        from using                          2  (_merge==2)
+
+    matched                               762  (_merge==3)
+    -----------------------------------------
+
+. gen str OCC_CODE_4digit = substr(OCC_CODE,1,5)
+
+. bys OCC_CODE_4digit: egen numer = total(telew*TOT_EMP)
+
+. bys OCC_CODE_4digit: egen denom = total(TOT_EMP)
+
+. gen telew_4digit = numer / denom
+(2 missing values generated)
+
+. replace teleworkable = telew_4digit if missing(teleworkable)==1 & (substr(OCC
+> _CODE,-1,1)=="9"|substr(OCC_CODE,-2,2)=="90"|OCC_CODE=="11-1031") & (strpos(O
+> CC_TITLE,"All Other")!=0|strpos(OCC_TITLE,"Miscellaneous")!=0|OCC_TITLE=="Leg
+> islators") //
+(46 real changes made)
+
+. assert missing(teleworkable)==0
+
+. keep OCC_CODE OCC_TITLE teleworkable
+
+. tempfile tf_merged_onet
+
+. save `tf_merged_onet'
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000004.tmp saved
+
+. 
+. //Merge two methods
+. use "../input/Teleworkable_BNJDopinion.dta", clear
+
+. gen str soc5 = substr(BroadGroupCode,1,6)
+
+. rename Teleworkable Tele_BNJD
+
+. tempfile tf0
+
+. save `tf0'
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000005.tmp saved
+
+. use `tf_merged_onet', clear
+
+. merge m:1 OCC_CODE using `tf_national_soc6', keepusing(OCC_TITLE OCC_GROUP TO
+> T_EMP) assert(master match) keep(match) nogen
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             0
+    matched                               808  
+    -----------------------------------------
+
+. gen str soc5 = substr(OCC_CODE,1,6)
+
+. collapse (mean) teleworkable [w=TOT_EMP], by(soc5)
+(analytic weights assumed)
+
+. merge 1:1 soc5 using `tf0' 
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             7
+        from master                         0  (_merge==1)
+        from using                          7  (_merge==2)
+
+    matched                               455  (_merge==3)
+    -----------------------------------------
+
+. list if _merge!=3
+
+     +------------------------------------------------------------------------+
+456. |          soc5        |        telewo~e        |        BroadG~e        |
+     |        45-301        |               .        |         45-3010        |
+     |------------------------------------------------------------------------|
+     | BroadGroup                                                             |
+     | Fishers and Related Fishing Workers                                    |
+     |------------------------------------------------------------------------|
+     |            Tele_B~D            |                    _merge             |
+     |                   0            |            using only (2)             |
+     +------------------------------------------------------------------------+
+
+     +------------------------------------------------------------------------+
+457. |          soc5        |        telewo~e        |        BroadG~e        |
+     |        45-302        |               .        |         45-3020        |
+     |------------------------------------------------------------------------|
+     | BroadGroup                                                             |
+     | Hunters and Trappers                                                   |
+     |------------------------------------------------------------------------|
+     |            Tele_B~D            |                    _merge             |
+     |                   0            |            using only (2)             |
+     +------------------------------------------------------------------------+
+
+     +------------------------------------------------------------------------+
+458. |          soc5        |        telewo~e        |        BroadG~e        |
+     |        53-102        |               .        |         53-1020        |
+     |------------------------------------------------------------------------|
+     | BroadGroup                                                             |
+     | First-Line Supervisors of Helpers, Laborers, and Material Movers, Hand |
+     |------------------------------------------------------------------------|
+     |            Tele_B~D            |                    _merge             |
+     |                   0            |            using only (2)             |
+     +------------------------------------------------------------------------+
+
+     +------------------------------------------------------------------------+
+459. |          soc5        |        telewo~e        |        BroadG~e        |
+     |        53-103        |               .        |         53-1030        |
+     |------------------------------------------------------------------------|
+     | BroadGroup                                                             |
+     | First-Line Supervisors of Transportation and Material-Moving Machine.. |
+     |------------------------------------------------------------------------|
+     |            Tele_B~D            |                    _merge             |
+     |                   0            |            using only (2)             |
+     +------------------------------------------------------------------------+
+
+     +------------------------------------------------------------------------+
+460. |          soc5        |        telewo~e        |        BroadG~e        |
+     |        55-101        |               .        |         55-1010        |
+     |------------------------------------------------------------------------|
+     | BroadGroup                                                             |
+     | Military Officer Special and Tactical Operations Leaders               |
+     |------------------------------------------------------------------------|
+     |            Tele_B~D            |                    _merge             |
+     |                   0            |            using only (2)             |
+     +------------------------------------------------------------------------+
+
+     +------------------------------------------------------------------------+
+461. |          soc5        |        telewo~e        |        BroadG~e        |
+     |        55-201        |               .        |         55-2010        |
+     |------------------------------------------------------------------------|
+     | BroadGroup                                                             |
+     | First-Line Enlisted Military Supervisors                               |
+     |------------------------------------------------------------------------|
+     |            Tele_B~D            |                    _merge             |
+     |                   0            |            using only (2)             |
+     +------------------------------------------------------------------------+
+
+     +------------------------------------------------------------------------+
+462. |          soc5        |        telewo~e        |        BroadG~e        |
+     |        55-301        |               .        |         55-3010        |
+     |------------------------------------------------------------------------|
+     | BroadGroup                                                             |
+     | Military Enlisted Tactical Operations and Air/Weapons Specialists an.. |
+     |------------------------------------------------------------------------|
+     |            Tele_B~D            |                    _merge             |
+     |                   0            |            using only (2)             |
+     +------------------------------------------------------------------------+
+
+. drop _merge
+
+. tempfile tf_merged
+
+. save `tf_merged'
+file C:\Users\Rafael\AppData\Local\Temp\ST_00000006.tmp saved
+
+. 
+. //Produce table with 2-digit SOC for both measures
+. use `tf_merged', clear
+
+. clonevar OCC_CODE = BroadGroupCode
+
+. merge 1:1 OCC_CODE using `tf_national_soc5', keepusing(OCC_TITLE OCC_GROUP TO
+> T_EMP) assert(master match) keep(match) nogen
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             0
+    matched                               455  
+    -----------------------------------------
+
+. gen soc2 = real(substr(OCC_CODE,1,2))
+
+. collapse (mean) teleworkable Tele_BNJD [w=TOT_EMP], by(soc2)
+(analytic weights assumed)
+
+. merge 1:1 soc2 using `tf_national_soc2', assert(master match) keepusing(OCC_T
+> ITLE) nogen
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                             0
+    matched                                22  
+    -----------------------------------------
+
+. gen str tele_bnjd_str = string(Tele_BNJD,"%3.2f")
+
+. gen str teleworkable_str = string(teleworkable,"%3.2f")
+
+. gsort -teleworkable soc2
+
+. listtex soc2 OCC_TITLE teleworkable_str tele_bnjd_str using "../output/soc2_s
+> ummary.tex", replace ///
+> rstyle(tabular) head("\begin{tabular}{llcc} \toprule" "&&O*NET-derived & Manu
+> al\\" "\multicolumn{2}{c}{Occupation} & baseline & assignment\\" "\midrule") 
+> foot("\bottomrule \end{tabular}")
+(note: file ../output/soc2_summary.tex not found)
+
+. 
+. //Report where two methods disagree for 5-digit SOC codes
+. use `tf_merged', clear
+
+. keep if (Tele_BNJD==0 & inrange(teleworkable,0.8,.)) | (Tele_BNJD==1 & inrang
+> e(teleworkable,0.0,0.2))
+(439 observations deleted)
+
+. gen str tele_bnjd_str = string(Tele_BNJD,"%2.0f")
+
+. gen str teleworkable_str = string(teleworkable,"%3.2f")
+
+. sort teleworkable Tele_BNJD soc5
+
+. listtex soc5 BroadGroup teleworkable_str tele_bnjd_str using "../output/metho
+> ds_disagree.tex", replace ///
+> rstyle(tabular) head("\begin{tabular}{llcc} \toprule" "&&O*NET-derived & Manu
+> al\\" "\multicolumn{2}{c}{Occupation} & baseline & assignment\\" "\midrule") 
+> foot("\bottomrule \end{tabular}")
+(note: file ../output/methods_disagree.tex not found)
+
+. 
+end of do-file
