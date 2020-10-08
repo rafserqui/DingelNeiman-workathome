@@ -23,7 +23,7 @@ NAICS,NAICS_TITLE,teleworkable_emp,teleworkable_wage,teleworkable_manual_emp,tel
 327,Nonmetallic Mineral Product Manufacturing,.16973431,.24461919,.14079817,.21575025
 331,Primary Metal Manufacturing,.12809217,.20472686,.1450136,.23102
 332,Fabricated Metal Product Manufacturing,.18565737,.27902955,.17467324,.27362719
-333,Machinery Manufacturing,.26123902,.38011867,.29196009,.43165445
+333,Machinery Manufacturing,.26123902,.3801187,.29196009,.43165445
 334,Computer and Electronic Product Manufacturing,.50609058,.67035425,.57492107,.7381528
 335,"Electrical Equipment, Appliance, and Component Manufacturing",.27664644,.4257068,.3083216,.47026804
 336,Transportation Equipment Manufacturing,.20939927,.33331767,.31905574,.45953196
@@ -54,7 +54,7 @@ NAICS,NAICS_TITLE,teleworkable_emp,teleworkable_wage,teleworkable_manual_emp,tel
 488,Support Activities for Transportation,.37003624,.45561537,.31814945,.38535985
 491,Postal Service (federal government),.082602106,.11354257,.043834168,.060760371
 492,Couriers and Messengers,.16096172,.19808941,.071091183,.099077307
-493,Warehousing and Storage,.16678795,.24769334,.098763324,.15469262
+493,Warehousing and Storage,.16678795,.24769334,.098763324,.15469261
 511,Publishing Industries (except Internet),.85813659,.91996396,.80557096,.87800694
 512,Motion Picture and Sound Recording Industries,.54986179,.63756686,.24313001,.32732812
 515,Broadcasting (except Internet),.59754372,.63646305,.45330223,.51048481
@@ -78,7 +78,7 @@ NAICS,NAICS_TITLE,teleworkable_emp,teleworkable_wage,teleworkable_manual_emp,tel
 622,Hospitals,.21102381,.20856754,.17981653,.16848804
 623,Nursing and Residential Care Facilities,.15695499,.20845784,.099696793,.14847462
 624,Social Assistance,.39221948,.42269984,.22281004,.28379354
-711,"Performing Arts, Spectator Sports, and Related Industries",.48202783,.5336808,.28233573,.40498084
+711,"Performing Arts, Spectator Sports, and Related Industries",.48202783,.5336808,.28233573,.4049809
 712,"Museums, Historical Sites, and Similar Institutions",.41305515,.55114585,.3284733,.45625693
 713,"Amusement, Gambling, and Recreation Industries",.233767,.26640487,.11198141,.18106075
 721,Accommodation,.13428272,.19643217,.077293046,.14067154

@@ -123,3 +123,20 @@ gen teleworkable_wage = wage_numer / wage_denom
 //Industry-level results
 keep eur_descript eursec teleworkable_emp teleworkable_wage
 duplicates drop
+
+//Report results in TEX 
+tempvar tv1 tv2
+egen `tv1' = rank(teleworkable_emp), field
+egen `tv2' = rank(teleworkable_emp), track
+
+keep if inrange(`tv1',1,5) | inrange(`tv2',1,5)
+gen row = (`tv1')*inrange(`tv1',1,5) + (11-`tv2')*inrange(`tv2',1,5)
+list eur_descript teleworkable_emp teleworkable_wage row
+gen str tele_emp_str = string(teleworkable_emp,"%3.2f")
+gen str tele_wage_str = string(teleworkable_wage,"%3.2f")
+
+listtex eur_descript tele_emp_str tele_wage_str using "D:/RESEARCH/covid-project/data/workfromhome.tex", replace ///
+rstyle(tabular) head("\begin{tabular}{lcc} \toprule" "& Unweighted & Weighted by wage\\" "\midrule") foot("\bottomrule \end{tabular}")
+
+// Export to CSV
+export delimited eursec eur_descript teleworkable_emp teleworkable_wage using "D:\RESEARCH\covid-project\data\ISIC_workfromhome.csv", replace
